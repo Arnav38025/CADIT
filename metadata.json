@@ -1,0 +1,5 @@
+{
+  "name": "CADIT",
+  "description": "An AI-native collaborative CAD platform for engineers to discover, fork, version, and AI-modify parametric CAD designs based on engineering constraints.",
+  "requestFramePermissions": []
+}
