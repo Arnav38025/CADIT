@@ -1,5 +1,12 @@
 
-import { CADRepository } from './types';
+import { CADRepository, Material } from './types';
+
+export const MATERIALS: Material[] = [
+  { id: 'mat1', name: 'Aluminum 6061-T6', density: 2700, costPerKg: 15, color: '#bdc3c7', metalness: 0.9, roughness: 0.2 },
+  { id: 'mat2', name: 'Carbon Fiber Reinforced', density: 1550, costPerKg: 85, color: '#2c3e50', metalness: 0.2, roughness: 0.8 },
+  { id: 'mat3', name: 'PLA Plastic (Bio)', density: 1240, costPerKg: 25, color: '#27ae60', metalness: 0.0, roughness: 0.5 },
+  { id: 'mat4', name: 'Titanium Grade 5', density: 4430, costPerKg: 120, color: '#7f8c8d', metalness: 1.0, roughness: 0.3 }
+];
 
 export const MOCK_REPOS: CADRepository[] = [
   {
@@ -7,10 +14,12 @@ export const MOCK_REPOS: CADRepository[] = [
     name: 'nema17-stepper-mount',
     description: 'Adjustable mounting bracket for NEMA 17 stepper motors with heat dissipation fins.',
     author: 'robotics-pro',
+    owner: 'robotics-pro',
     stars: 128,
     forksCount: 45,
     updatedAt: '2024-10-24T10:00:00Z',
     geometryType: 'bracket',
+    currentMaterialId: 'mat1',
     parameters: [
       { id: 'p1', name: 'Base Width', value: 42, unit: 'mm', min: 30, max: 100, description: 'Width of the mounting base' },
       { id: 'p2', name: 'Thickness', value: 4, unit: 'mm', min: 2, max: 12, description: 'Wall thickness for structural rigidity' },
@@ -18,8 +27,7 @@ export const MOCK_REPOS: CADRepository[] = [
       { id: 'p4', name: 'Fin Count', value: 5, unit: 'pcs', min: 0, max: 10, description: 'Number of cooling fins' }
     ],
     intent: [
-      { id: 'i1', description: 'Must support 2.5kg load without deflection > 0.1mm', constraintType: 'load', priority: 'high' },
-      { id: 'i2', description: 'Compatible with standard M3 socket head screws', constraintType: 'manufacturing', priority: 'medium' }
+      { id: 'i1', description: 'Must support 2.5kg load without deflection > 0.1mm', constraintType: 'load', priority: 'high' }
     ],
     history: [
       { id: 'c1', author: 'robotics-pro', timestamp: '2024-10-24T10:00:00Z', message: 'Initial commit', hash: '8a2b3c4', parametersSnapshot: [] }
@@ -30,42 +38,41 @@ export const MOCK_REPOS: CADRepository[] = [
     name: 'rugged-rpi-enclosure',
     description: 'Industrial grade enclosure for Raspberry Pi 4 with integrated rail mounts.',
     author: 'industrial-designs',
+    owner: 'industrial-designs',
     stars: 84,
     forksCount: 12,
     updatedAt: '2024-10-25T14:30:00Z',
     geometryType: 'enclosure',
+    currentMaterialId: 'mat3',
     parameters: [
       { id: 'p1', name: 'Internal Height', value: 25, unit: 'mm', min: 20, max: 60, description: 'Space for HAT modules' },
-      { id: 'p2', name: 'Wall Thickness', value: 2, unit: 'mm', min: 1, max: 5, description: 'Case shell thickness' },
-      { id: 'p3', name: 'Fan Cutout Dia', value: 30, unit: 'mm', min: 0, max: 40, description: 'Diameter for active cooling' }
+      { id: 'p2', name: 'Wall Thickness', value: 2, unit: 'mm', min: 1, max: 5, description: 'Case shell thickness' }
     ],
     intent: [
-      { id: 'i1', description: 'IP54 ingress protection rating target', constraintType: 'material', priority: 'medium' },
-      { id: 'i2', description: 'No overhangs > 45 degrees for FDM printing', constraintType: 'manufacturing', priority: 'high' }
+      { id: 'i1', description: 'IP54 ingress protection rating target', constraintType: 'material', priority: 'medium' }
     ],
     history: [
       { id: 'c1', author: 'industrial-designs', timestamp: '2024-10-25T14:30:00Z', message: 'Optimized for rail mounts', hash: 'f4e5d6a', parametersSnapshot: [] }
     ]
   },
   {
-    id: '3',
-    name: 'extrusion-corner-brace',
-    description: 'Parametric 2020/4040 aluminum extrusion corner connector.',
-    author: 'openbuilds-fan',
-    stars: 312,
-    forksCount: 156,
-    updatedAt: '2024-10-26T09:15:00Z',
-    geometryType: 'bracket',
+    id: 'my-part-1',
+    name: 'custom-drone-frame',
+    description: 'Lightweight X-frame for 5-inch drones with integrated battery strap slots.',
+    author: 'Jane Doe',
+    owner: 'Jane Doe',
+    stars: 5,
+    forksCount: 0,
+    updatedAt: '2024-10-26T12:00:00Z',
+    geometryType: 'frame',
+    currentMaterialId: 'mat2',
     parameters: [
-      { id: 'p1', name: 'Leg Length', value: 30, unit: 'mm', min: 20, max: 80, description: 'Length of each leg' },
-      { id: 'p2', name: 'Width', value: 20, unit: 'mm', min: 20, max: 40, description: 'Matches extrusion profile' },
-      { id: 'p3', name: 'Fillet Radius', value: 5, unit: 'mm', min: 0, max: 10, description: 'Inner corner reinforcement' }
+      { id: 'p1', name: 'Arm Length', value: 120, unit: 'mm', min: 100, max: 150, description: 'Motor to motor distance' },
+      { id: 'p2', name: 'Standoff Height', value: 25, unit: 'mm', min: 20, max: 35, description: 'Stack clearance' }
     ],
-    intent: [
-      { id: 'i1', description: 'Interlocking tabs for alignment', constraintType: 'geometric', priority: 'medium' }
-    ],
+    intent: [],
     history: [
-      { id: 'c1', author: 'openbuilds-fan', timestamp: '2024-10-26T09:15:00Z', message: 'Support 4040 profile scaling', hash: 'd1e2f3g', parametersSnapshot: [] }
+      { id: 'c1', author: 'Jane Doe', timestamp: '2024-10-26T12:00:00Z', message: 'V1 frame design complete', hash: 'm1y2p3a', parametersSnapshot: [] }
     ]
   }
 ];

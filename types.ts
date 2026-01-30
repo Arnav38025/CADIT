@@ -25,11 +25,22 @@ export interface Commit {
   parametersSnapshot: Parameter[];
 }
 
+export interface Material {
+  id: string;
+  name: string;
+  density: number; // kg/m^3
+  costPerKg: number;
+  color: string;
+  metalness: number;
+  roughness: number;
+}
+
 export interface CADRepository {
   id: string;
   name: string;
   description: string;
   author: string;
+  owner: string; // User who currently holds this copy
   stars: number;
   forksCount: number;
   updatedAt: string;
@@ -37,6 +48,8 @@ export interface CADRepository {
   intent: DesignIntent[];
   history: Commit[];
   geometryType: 'bracket' | 'enclosure' | 'frame';
+  currentMaterialId: string;
+  forkedFrom?: string; // ID of original repo
 }
 
 export interface AIModificationResult {
@@ -46,10 +59,24 @@ export interface AIModificationResult {
 }
 
 export interface ActiveAdjustFeedback {
-  stability: number; // 0-100
-  feasibility: number; // 0-100
-  fitScore: number; // 0-100
+  stability: number; 
+  feasibility: number;
+  fitScore: number;
   engineeringInsights: string[];
   suggestedAssemblyTweak: string;
   contextGeometry?: 'rail' | 'motor' | 'wall' | 'none';
+}
+
+export interface PhysicsStats {
+  estimatedMass: number;
+  cost: number;
+  centerOfGravity: [number, number, number];
+  structuralIntegrityScore: number;
+}
+
+export interface ManufacturingAudit {
+  method: 'CNC' | '3D Print' | 'Injection Mold';
+  rating: number; // 0-100
+  issues: string[];
+  recommendations: string[];
 }

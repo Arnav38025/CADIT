@@ -1,38 +1,30 @@
 
 import { GoogleGenAI, Type } from "@google/genai";
-import { Parameter, DesignIntent, AIModificationResult, ActiveAdjustFeedback } from "../types";
+import { Parameter, DesignIntent, AIModificationResult, ActiveAdjustFeedback, PhysicsStats, ManufacturingAudit, Material } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Always use gemini-3-pro-preview for complex engineering reasoning and STEM tasks.
+// Instantiate GoogleGenAI inside functions to ensure the most up-to-date API key from process.env.API_KEY.
 
 export async function modifyParametricModel(
   prompt: string,
   currentParameters: Parameter[],
   intents: DesignIntent[]
 ): Promise<AIModificationResult> {
-  const model = 'gemini-3-flash-preview';
-
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const model = 'gemini-3-pro-preview';
   const systemInstruction = `
     You are an expert Mechanical Engineer and Parametric CAD specialized AI.
     Your task is to update CAD parameters based on a natural language request.
-    
-    You must respect the "Design Intent" constraints provided.
-    If a request violates a high-priority intent, mention it in the intentViolations.
-    
-    Current Parameters: ${JSON.stringify(currentParameters)}
-    Design Intents: ${JSON.stringify(intents)}
-    
-    Return a JSON object with:
-    1. updatedParameters: Array of the full parameter objects with their new values.
-    2. explanation: A technical explanation of why these specific changes were made.
-    3. intentViolations: Array of strings describing any constraints that were challenged or violated.
+    Respect the "Design Intent" constraints.
+    Return the updated parameters, a brief explanation, and any intent violations.
   `;
 
   try {
     const response = await ai.models.generateContent({
       model,
-      contents: prompt,
-      config: {
-        systemInstruction,
+      contents: `Request: ${prompt}\nContext: ${JSON.stringify({currentParameters, intents})}`,
+      config: { 
+        systemInstruction, 
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -46,11 +38,11 @@ export async function modifyParametricModel(
                   name: { type: Type.STRING },
                   value: { type: Type.NUMBER },
                   unit: { type: Type.STRING },
-                  description: { type: Type.STRING },
                   min: { type: Type.NUMBER },
                   max: { type: Type.NUMBER },
+                  description: { type: Type.STRING },
                 },
-                required: ["id", "name", "value", "unit"]
+                required: ['id', 'name', 'value', 'unit', 'description'],
               }
             },
             explanation: { type: Type.STRING },
@@ -59,12 +51,12 @@ export async function modifyParametricModel(
               items: { type: Type.STRING }
             }
           },
-          required: ["updatedParameters", "explanation", "intentViolations"]
+          required: ['updatedParameters', 'explanation', 'intentViolations'],
         }
       }
     });
-
-    return JSON.parse(response.text || '{}') as AIModificationResult;
+    const jsonStr = response.text.trim();
+    return JSON.parse(jsonStr || '{}') as AIModificationResult;
   } catch (error) {
     console.error("Gemini API Error:", error);
     throw new Error("Failed to process AI modification.");
@@ -76,33 +68,19 @@ export async function analyzeActiveAdjust(
   parameters: Parameter[],
   intents: DesignIntent[]
 ): Promise<ActiveAdjustFeedback> {
-  const model = 'gemini-3-flash-preview';
-
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const model = 'gemini-3-pro-preview';
   const systemInstruction = `
-    You are a Senior Mechanical Engineering Auditor. 
-    Analyze the current CAD model's parameters in the context of a specific assembly requirement.
-    
-    Return a JSON object with:
-    1. stability: (0-100) Structural rigidity score based on parameters.
-    2. feasibility: (0-100) Can it be manufactured given the constraints?
-    3. fitScore: (0-100) How well does it fit the described assembly?
-    4. engineeringInsights: 3-4 bullet points of high-level engineering advice.
-    5. suggestedAssemblyTweak: A concise suggestion for a parameter change to improve fit.
-    6. contextGeometry: One of ['rail', 'motor', 'wall', 'none'] based on the assembly description.
-  `;
-
-  const prompt = `
-    Assembly Context: ${assemblyContext}
-    Current Model Parameters: ${JSON.stringify(parameters)}
-    Engineering Intents: ${JSON.stringify(intents)}
+    Analyze the current CAD model's parameters in the context of an assembly.
+    Return engineering insights and scores for stability and feasibility.
   `;
 
   try {
     const response = await ai.models.generateContent({
       model,
-      contents: prompt,
-      config: {
-        systemInstruction,
+      contents: `Assembly: ${assemblyContext}\nParams: ${JSON.stringify(parameters)}`,
+      config: { 
+        systemInstruction, 
         responseMimeType: "application/json",
         responseSchema: {
           type: Type.OBJECT,
@@ -112,16 +90,85 @@ export async function analyzeActiveAdjust(
             fitScore: { type: Type.NUMBER },
             engineeringInsights: { type: Type.ARRAY, items: { type: Type.STRING } },
             suggestedAssemblyTweak: { type: Type.STRING },
-            contextGeometry: { type: Type.STRING }
+            contextGeometry: { 
+              type: Type.STRING, 
+              description: 'Target geometry type: rail, motor, wall, or none.' 
+            },
           },
-          required: ["stability", "feasibility", "fitScore", "engineeringInsights", "suggestedAssemblyTweak", "contextGeometry"]
+          required: ['stability', 'feasibility', 'fitScore', 'engineeringInsights', 'suggestedAssemblyTweak', 'contextGeometry'],
         }
       }
     });
-
-    return JSON.parse(response.text || '{}') as ActiveAdjustFeedback;
+    const jsonStr = response.text.trim();
+    return JSON.parse(jsonStr || '{}') as ActiveAdjustFeedback;
   } catch (error) {
-    console.error("Active Adjust Error:", error);
-    throw new Error("Failed to analyze assembly context.");
+    console.error(error);
+    throw error;
   }
+}
+
+export async function runManufacturingAudit(
+  parameters: Parameter[],
+  material: Material
+): Promise<ManufacturingAudit> {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const model = 'gemini-3-pro-preview';
+  const systemInstruction = `
+    Perform a DFM (Design for Manufacturing) audit based on parameters and material properties.
+  `;
+  const response = await ai.models.generateContent({
+    model,
+    contents: `Params: ${JSON.stringify(parameters)}\nMaterial: ${JSON.stringify(material)}`,
+    config: { 
+      systemInstruction, 
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          method: { type: Type.STRING, description: 'CNC, 3D Print, or Injection Mold' },
+          rating: { type: Type.NUMBER },
+          issues: { type: Type.ARRAY, items: { type: Type.STRING } },
+          recommendations: { type: Type.ARRAY, items: { type: Type.STRING } },
+        },
+        required: ['method', 'rating', 'issues', 'recommendations'],
+      }
+    }
+  });
+  const jsonStr = response.text.trim();
+  return JSON.parse(jsonStr || '{}');
+}
+
+export async function calculatePhysics(
+  parameters: Parameter[],
+  material: Material
+): Promise<PhysicsStats> {
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const model = 'gemini-3-pro-preview';
+  const systemInstruction = `
+    Estimate mechanical physics properties like mass and structural integrity.
+  `;
+  const response = await ai.models.generateContent({
+    model,
+    contents: `Params: ${JSON.stringify(parameters)}\nMaterial: ${JSON.stringify(material)}`,
+    config: { 
+      systemInstruction, 
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.OBJECT,
+        properties: {
+          estimatedMass: { type: Type.NUMBER, description: 'Mass in kg' },
+          cost: { type: Type.NUMBER, description: 'Estimated cost in USD' },
+          centerOfGravity: { 
+            type: Type.ARRAY, 
+            items: { type: Type.NUMBER },
+            description: '[x, y, z] coordinates' 
+          },
+          structuralIntegrityScore: { type: Type.NUMBER, description: '0 to 100' },
+        },
+        required: ['estimatedMass', 'cost', 'centerOfGravity', 'structuralIntegrityScore'],
+      }
+    }
+  });
+  const jsonStr = response.text.trim();
+  return JSON.parse(jsonStr || '{}');
 }

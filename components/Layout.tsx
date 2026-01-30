@@ -7,25 +7,36 @@ import {
   History, 
   Settings, 
   Bell, 
-  User, 
   Plus, 
   Compass, 
   Database,
   Cpu
 } from 'lucide-react';
 
+export type ViewType = 'discover' | 'my-parts' | 'forks' | 'changesets' | 'settings' | 'repo';
+
 interface LayoutProps {
   children: React.ReactNode;
-  activeView: 'discover' | 'repo';
-  onNavigate: (view: 'discover' | 'repo') => void;
+  activeView: ViewType;
+  onNavigate: (view: ViewType) => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children, activeView, onNavigate }) => {
+  const NavItem = ({ icon: Icon, label, view }: { icon: any, label: string, view: ViewType }) => (
+    <button 
+      onClick={() => onNavigate(view)}
+      className={`w-full flex items-center gap-3 p-3 rounded-md transition-colors ${activeView === view ? 'bg-[#161b22] text-white' : 'text-[#8b949e] hover:bg-[#161b22] hover:text-white'}`}
+    >
+      <Icon className="w-5 h-5" />
+      <span className="hidden md:inline font-medium">{label}</span>
+    </button>
+  );
+
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
       <aside className="w-16 md:w-64 border-r border-[#30363d] flex flex-col bg-[#010409]">
-        <div className="p-4 flex items-center gap-3 border-b border-[#30363d]">
+        <div className="p-4 flex items-center gap-3 border-b border-[#30363d] cursor-pointer" onClick={() => onNavigate('discover')}>
           <div className="bg-blue-600 p-1.5 rounded-lg">
             <Cpu className="text-white w-5 h-5" />
           </div>
@@ -33,32 +44,21 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeView, onNavigate
         </div>
 
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-          <button 
-            onClick={() => onNavigate('discover')}
-            className={`w-full flex items-center gap-3 p-3 rounded-md transition-colors ${activeView === 'discover' ? 'bg-[#161b22] text-white' : 'text-[#8b949e] hover:bg-[#161b22] hover:text-white'}`}
-          >
-            <Compass className="w-5 h-5" />
-            <span className="hidden md:inline font-medium">Discover</span>
-          </button>
-          <button className="w-full flex items-center gap-3 p-3 rounded-md text-[#8b949e] hover:bg-[#161b22] hover:text-white transition-colors">
-            <Box className="w-5 h-5" />
-            <span className="hidden md:inline font-medium">My Parts</span>
-          </button>
+          <NavItem icon={Compass} label="Discover" view="discover" />
+          <NavItem icon={Box} label="My Parts" view="my-parts" />
+          
           <div className="pt-4 pb-2 px-3">
             <span className="hidden md:inline text-[10px] font-bold text-[#484f58] uppercase tracking-widest">Collaborations</span>
           </div>
-          <button className="w-full flex items-center gap-3 p-3 rounded-md text-[#8b949e] hover:bg-[#161b22] hover:text-white transition-colors">
-            <GitFork className="w-5 h-5" />
-            <span className="hidden md:inline font-medium">Forks</span>
-          </button>
-          <button className="w-full flex items-center gap-3 p-3 rounded-md text-[#8b949e] hover:bg-[#161b22] hover:text-white transition-colors">
-            <History className="w-5 h-5" />
-            <span className="hidden md:inline font-medium">Changesets</span>
-          </button>
+          <NavItem icon={GitFork} label="Forks" view="forks" />
+          <NavItem icon={History} label="Changesets" view="changesets" />
         </nav>
 
         <div className="p-4 border-t border-[#30363d] space-y-4">
-          <button className="flex items-center gap-3 w-full text-[#8b949e] hover:text-white">
+          <button 
+            onClick={() => onNavigate('settings')}
+            className={`flex items-center gap-3 w-full transition-colors ${activeView === 'settings' ? 'text-white' : 'text-[#8b949e] hover:text-white'}`}
+          >
             <Settings className="w-5 h-5" />
             <span className="hidden md:inline">Settings</span>
           </button>
@@ -93,7 +93,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, activeView, onNavigate
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-blue-500 rounded-full border-2 border-[#0d1117]"></span>
             </button>
-            <button className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-colors shadow-lg shadow-blue-900/20">
+            <button 
+              onClick={() => onNavigate('settings')}
+              className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 transition-colors shadow-lg shadow-blue-900/20"
+            >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">New Repo</span>
             </button>
